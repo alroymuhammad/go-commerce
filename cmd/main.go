@@ -36,7 +36,7 @@ func main() {
 	mux.HandleFunc("/", home)
 
 	log.Printf("Starting server on %s", *addr)
-	err := http.ListenAndServe(*addr, mux)
+	err = http.ListenAndServe(*addr, mux)
 	log.Fatal(err)
 }
 
