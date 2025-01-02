@@ -1,45 +1,26 @@
 package main
 
 import (
-	"database/sql"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
 
-	_ "github.com/lib/pq"
-)
-
-const (
-	host     = "localhost"
-	port     = 5432
-	user     = "postgres"
-	password = "admin"
-	dbname   = "commerce"
+	"github.com/alroymuhammad/go-commerce/internal/handler"
+	"github.com/alroymuhammad/go-commerce/pkg/config"
 )
 
 func main() {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-	db, err := sql.Open("postgres", psqlInfo)
-	if err != nil {
-		log.Fatalf("Unable to connect to database: %v", err)
-	}
-	defer db.Close()
-	err = db.Ping()
-	if err != nil {
-		log.Fatalf("Ping failed: %v", err)
-	}
-	fmt.Println("Successfully connected to the database!")
-	addr := flag.String("addr", ":4000", "HTTP network address")
-	flag.Parse()
+	config.ConnectDB()
+	defer config.DB.Close()
+
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", home)
+	userHandler := handler.NewUserHandler(config.DB)
+	mux.Handle("/users/", userHandler)
+	mux.Handle("/users", userHandler)
 
-	log.Printf("Starting server on %s", *addr)
-	err = http.ListenAndServe(*addr, mux)
-	log.Fatal(err)
-}
-
-func home(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Welcome to Go Commerce!")
+	port := ":8080"
+	fmt.Printf("Server starting on port%s...\n", port)
+	if err := http.ListenAndServe(port, mux); err != nil {
+		log.Fatal(err)
+	}
 }
