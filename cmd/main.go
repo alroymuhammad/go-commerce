@@ -15,8 +15,11 @@ func main() {
 
 	mux := http.NewServeMux()
 	userHandler := handler.NewUserHandler(config.DB)
+	productHandler := handler.NewProductHandler(config.DB)
 	mux.Handle("/users/", userHandler)
 	mux.Handle("/users", userHandler)
+	mux.Handle("/products/", productHandler)
+	mux.Handle("/products", productHandler)
 
 	port := ":8080"
 	fmt.Printf("Server starting on port%s...\n", port)
