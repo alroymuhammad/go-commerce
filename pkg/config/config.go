@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
@@ -21,30 +22,34 @@ type DBConfig struct {
 
 var DB *sql.DB
 
-func getEnvOrDefault(key, defaultValue string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		return defaultValue
-	}
-	return value
-}
-
 func ConnectDB() *sql.DB {
+	// Load .env file
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	// Get all required env variables with no defaults
 	dbConfig := DBConfig{
-		Host:     getEnvOrDefault("DB_HOST", "localhost"),
-		Port:     getEnvOrDefault("DB_PORT", "5432"),
-		User:     getEnvOrDefault("DB_USER", "postgres"),
-		Password: os.Getenv("DB_PASSWORD"), // Password should be required
-		DBName:   getEnvOrDefault("DB_NAME", "commerce"),
-		SSLMode:  getEnvOrDefault("DB_SSL_MODE", "disable"),
+		Host:     os.Getenv("DB_HOST"),
+		Port:     os.Getenv("DB_PORT"),
+		User:     os.Getenv("DB_USER"),
+		Password: os.Getenv("DB_PASSWORD"),
+		DBName:   os.Getenv("DB_NAME"),
+		SSLMode:  os.Getenv("DB_SSL_MODE"),
+	}
+
+	// Validate that all required env variables are set
+	if dbConfig.Host == "" || dbConfig.Port == "" || dbConfig.User == "" ||
+		dbConfig.Password == "" || dbConfig.DBName == "" || dbConfig.SSLMode == "" {
+		log.Fatal("Missing required database environment variables")
 	}
 
 	connStr := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		dbConfig.Host,
-		dbConfig.Port,
+		"postgresql://%s:%s@%s:%s/%s?sslmode=%s",
 		dbConfig.User,
 		dbConfig.Password,
+		dbConfig.Host,
+		dbConfig.Port,
 		dbConfig.DBName,
 		dbConfig.SSLMode,
 	)
